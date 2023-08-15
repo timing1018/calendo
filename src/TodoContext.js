@@ -14,7 +14,7 @@ const initialTodos = [
   {
     id: 3,
     text: 'Context 만들기',
-    done: false
+    done: true
   },
   {
     id: 4,
@@ -33,6 +33,10 @@ function todoReducer(state, action) {
       );
     case 'REMOVE':
       return state.filter(todo => todo.id !== action.id);
+    case 'EDIT': // EDIT 액션 추가
+      return state.map(todo =>
+        todo.id === action.id ? { ...todo, text: action.text } : todo
+      );
     default:
       throw new Error(`Unhandled action type: ${action.type}`);
   }
