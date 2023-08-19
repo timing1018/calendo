@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useTodoState } from '../TodoContext';
+import { useTodoState } from '../../TodoContext';
 
 const TodoHeadBlock = styled.div`
   padding-top: 48px;
@@ -22,7 +22,7 @@ const TodoHeadBlock = styled.div`
     color: #8758ff;
     font-size: 18px;
     margin-top: 40px;
-    font-weight: bold;
+    font-weight: 600;
   }
 `;
 
