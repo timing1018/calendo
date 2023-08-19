@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import { MdAdd } from 'react-icons/md';
 import { useTodoDispatch, useTodoNextId } from '../../TodoContext';
 
-const CircleButton = styled.button`
+const PlusButton = styled.button`
   background: #8758ff;
   &:hover {
     background: #b497ff;
@@ -115,9 +115,9 @@ function TodoCreate() {
           </InsertForm>
         </InsertFormPositioner>
       )}
-      <CircleButton onClick={onToggle} open={open}>
+      <PlusButton onClick={onToggle} open={open}>
         <MdAdd />
-      </CircleButton>
+      </PlusButton>
     </>
   );
 }
