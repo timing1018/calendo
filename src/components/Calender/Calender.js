@@ -1,9 +1,11 @@
-import {useState} from 'react';
+import React from 'react';
+import {useState, useEffect} from 'react';
 import moment from 'moment';
 import 'moment/locale/ko'; // 한국어 로케일을 불러옵니다
 import styled, {css} from 'styled-components';
 import { MdOutlineNavigateBefore, MdOutlineNavigateNext, MdAdd } from 'react-icons/md';
-
+import axios from "axios";
+import HolidayDetail from './HolidayDetail'; 
 
 const PlusButton = styled.button`
   background: #8758ff;
@@ -80,28 +82,42 @@ const Calendertable = styled.table`
   cursor: pointer;
 `
 
-const TableTd = styled.td`
+const WeekdaysHeader = styled.tr`
+  color: #868e96;
+`;
+
+const WeekdayCell = styled.th`
   padding: 10px;
   width: 25px;
   height: 25px;
 `;
 
-const TdToday = styled.td`
+const TableTd = styled.td`
+  padding: 10px;
+  width: 25px;
+  height: 25px;
+  position: relative;
+`;
+
+const EventMarkWrapper = styled.div`
+  position: relative;
+  padding: 0;
+  width: 25px;
+
+  cursor: pointer;
+`;
+
+const EventMark = styled.div`
+  position: absolute;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  color: #c5aeff !important;
-  background-color: #8758ff;
-  font-weight: 600;
-`;
-
-const Star = styled.div`
-  width: 17px;
   margin: 0 auto;
-  border-bottom: 2px solid #b497ff;
+  background-color: #b497ff;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
 `;
-
-const TdAnotherMonth = styled.td`
-  color: #acacac;
-`
 
 const EventList = styled.div`
   margin-top: 20px;
@@ -135,6 +151,17 @@ const EventTitle = styled.li`
   }
 `;
 
+const EventEditButton = styled.button`
+  background: none;
+  border: none;
+  color: #495057;
+  cursor: pointer;
+`;
+
+const EventEditIcon = styled.span`
+  margin-right: 5px;
+`;
+
 const InputPositioner = styled.div`
   width: 100%;
   bottom: 0;
@@ -145,9 +172,9 @@ const InputPositioner = styled.div`
 const InputWrap = styled.div`
   background: #f8f9fa;
   padding-left: 32px;
-  padding-top: 50px;
+  padding-top: 40px;
   padding-right: 32px;
-  padding-bottom: 50px;
+  padding-bottom: 30px;
 
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
@@ -170,7 +197,7 @@ const BtnWrap = styled.div`
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  margin-top: 44px;
+  margin-top: 27px;
 `;
 
 const CalenderBtn = styled.div`
@@ -187,19 +214,38 @@ const CalenderBtn = styled.div`
   }
 `;
 
+const HolidayMark = styled.div`
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: red;
+  margin: 0 auto;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+`;
+
+const LoadingIndicator = () => {
+  return <div>Loading...</div>;
+};
 
 const Calender =()=>{
-
   const [getMoment, setMoment]=useState(moment());
+  const [holiday, setHoliday] = useState([]); // Initialize with an empty array
+  const [selectedHoliday, setSelectedHoliday] = useState(null);
+  const [loading, setLoading] = useState(false); // 로딩 상태 추가
+
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토']; // 요일 배열
 
   // 일정 데이터 상태 초기화
-  const [events, setEvents] = useState([
-    // 예시: { date: '2023-08-19', title: 'Example Event' }
-  ]);
+  const [events, setEvents] = useState([]);
 
   const [showAddModal, setShowAddModal] = useState(false); // 일정 추가 모달 표시 여부
   const [newEventDate, setNewEventDate] = useState(''); // 새로운 일정의 날짜
   const [newEventTitle, setNewEventTitle] = useState(''); // 새로운 일정의 제목
+
+  const [editingEvent, setEditingEvent] = useState(null); // 수정 중인 일정 정보
 
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD')); // 선택된 날짜 상태 추가
 
@@ -210,52 +256,102 @@ const Calender =()=>{
   const [open, setOpen] = useState(false);
   const onToggle = () => setOpen(!open);
 
-    const calendarArr=()=>{
+  const calendarArr=()=>{
 
-      let result = [];
-      let week = firstWeek;
-      for ( week; week <= lastWeek; week++) {
-        result = result.concat(
-          <tr key={week}>
-            {
-              Array(7).fill(0).map((data, index) => {
-                let days = today.clone().startOf('year').week(week).startOf('week').add(index, 'day'); //d로해도되지만 직관성
+    let result = [];
+    let week = firstWeek;
 
-                // 예정된 일정이 있는지 확인
-                const event = events.find(event => event.date === days.format('YYYY-MM-DD'));
+    for ( week; week <= lastWeek; week++) {
+      result = result.concat(
+        <tr key={week}>
+          {
+            Array(7).fill(0).map((data, index) => {
+              let days = today.clone().startOf('year').week(week).startOf('week').add(index, 'day'); //d로해도되지만 직관성
 
-                // 일요일일 경우 레드 컬러로 표시
-                const isSunday = days.day() === 0;
-                const tdStyle = isSunday ? { color: 'red' } : {};
+              // 예정된 일정이 있는지 확인
+              const event = events.find(event => event.date === days.format('YYYY-MM-DD'));
 
-                if(moment().format('YYYYMMDD') === days.format('YYYYMMDD')){
-                  return(
-                      <TdToday key={index} style={tdStyle}>
-                        <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
-                        {event && <Star></Star>}
-                      </TdToday>
-                  );
-                }else if(days.format('MM') !== today.format('MM')){
-                  return(
-                      <TdAnotherMonth key={index} >
-                        <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
-                      </TdAnotherMonth>
-                  );
-                }else{
-                  return(
-                      <TableTd key={index} style={tdStyle}>
-                        <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
-                        {event && <Star></Star>}
-                      </TableTd>
-                  );
-                }
-              })
-            }
+              const isToday = days.isSame(moment(), 'day'); // 오늘 날짜인지 확인
+              const isSunday = days.day() === 0;
+              const locdateString = days.format('YYYYMMDD');
+              const isHoliday = holiday.some(holidayDate => holidayDate.locdate.toString() === days.format('YYYYMMDD'));
+
+              const isCurrentMonth = days.month() === today.month(); // 이번 달의 날짜인지 확인
+              const tdStyle = {
+                color: isSunday ? 'red' : isToday ? '#c5aeff' : isCurrentMonth ? (isHoliday ? 'red' : '#343a40') : '#acacac',
+                fontWeight: isToday ? '600' : 'normal', // 오늘 날짜는 더 강조된 글꼴 두께,
+                backgroundColor: isToday ? '#8758ff' : '',
+                borderRadius: isToday ? '50%' : '',
+              };
+                
+              console.log("isHoliday:", isHoliday);
+
+              // 모든 날짜에 대해 cellContent 생성
+              const cellContent = (
+                <TableTd key={index} style={tdStyle}>
+                  <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
+                  {event && (<EventMarkWrapper><EventMark /></EventMarkWrapper>)}
+                  {/* {isHoliday && <HolidayMark />} */}
+                  {isHoliday && (
+                    <HolidayMark
+                      onClick={() => {
+                        console.log('Checking isHoliday:', days.format('YYYYMMDD'), isHoliday);
+                        console.log('Holiday Array:', holiday);
+                  
+                        const clickedHoliday = holiday.find(
+                          (holiday) => holiday.locdate === parseInt(days.format('YYYYMMDD'))
+                        );
+                        console.log('Clicked Holiday:', clickedHoliday);
+                        setSelectedHoliday(clickedHoliday);
+                      }}
+                    />
+                  )}
+                </TableTd>
+              );
+
+              return cellContent;
+            })}
           </tr>
         );
       }
       return result;
     }
+
+    useEffect(() => {
+      const fetchHolidayData = async () => {
+        setLoading(true);
+  
+        try {
+          const serviceKey = decodeURIComponent(process.env.REACT_APP_SERVICE_KEY);
+          const response = await axios.get(
+            `http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo`,
+            {
+              params: {
+                ServiceKey: serviceKey,
+                solYear: getMoment.year(),
+                solMonth: (getMoment.month() + 1).toString().padStart(2, '0'),
+              },
+            }
+          );
+  
+          if (response.data && response.data.response && response.data.response.body) {
+            let holidayData = response.data.response.body.items.item;
+            if (!Array.isArray(holidayData)) {
+              holidayData = [holidayData];
+            }
+            setHoliday(holidayData);
+          } else {
+            console.error('Invalid API response format:', response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching holiday data:', error);
+        }
+  
+        setLoading(false);
+      };
+  
+      fetchHolidayData();
+    }, [getMoment]);
 
     const handleAddEvent = () => {
       setShowAddModal(true);
@@ -263,6 +359,7 @@ const Calender =()=>{
       setNewEventDate(currentDate); // 현재 날짜로 초기화
       setSelectedDate(currentDate); // 새로운 일정을 추가한 날짜로 선택된 날짜 업데이트
       setNewEventTitle('');
+      setSelectedHoliday(null); // 공휴일 정보 초기화
     };
   
     const handleSaveEvent = () => {
@@ -279,11 +376,45 @@ const Calender =()=>{
       .filter(event => event.date === selectedDate) // 선택한 날짜에 해당하는 일정만 필터링  
 
     const handleCellClick = (date) => {
-      setSelectedDate(date); // 클릭한 날짜를 선택된 날짜로 설정
+      setSelectedDate(date);
+      const clickedHoliday = holiday.find(
+        (holiday) => holiday.locdate === parseInt(moment(date).format('YYYYMMDD'))
+      );
+
+      console.log('Clicked Holiday:', clickedHoliday); // 추가
+      setSelectedHoliday(clickedHoliday);
+      setNewEventDate(date); // 클릭한 날짜로 newEventDate 업데이트
+    };
+
+      
+    const handleEditEvent = (event) => {
+      setEditingEvent(event); // 수정 중인 일정 정보 설정
+      setShowAddModal(true); // 모달 표시
+      setNewEventDate(event.date); // 수정 중인 일정의 날짜 설정
+      setNewEventTitle(event.title); // 수정 중인 일정의 제목 설정
+    };
+  
+    const handleUpdateEvent = () => {
+      const updatedEvent = { ...editingEvent, date: newEventDate, title: newEventTitle };
+      const updatedEvents = events.map(event =>
+        event === editingEvent ? updatedEvent : event
+      );
+      setEvents(updatedEvents);
+      setEditingEvent(null); // 수정 중인 일정 정보 초기화
+      setShowAddModal(false); // 모달 닫기
+    };
+
+    const handleDeleteEvent = (event) => {
+      const updatedEvents = events.filter(existingEvent => existingEvent !== event);
+      setEvents(updatedEvents);
     };
 
   return (
     <CalenderContainer>
+      {/* 로딩 중이면 로딩 상태를 표시, 아니면 캘린더 컴포넌트를 표시 */}
+      {loading ? (
+        <LoadingIndicator />
+      ) : (
       <CalenderWrapper>
 
           <CalenderControl>
@@ -296,6 +427,13 @@ const Calender =()=>{
             </NextBtn>
           </CalenderControl>
           <Calendertable>
+            <thead>
+              <WeekdaysHeader>
+                {weekdays.map((weekday, index) => (
+                  <WeekdayCell key={index}>{weekday}</WeekdayCell>
+                ))}
+              </WeekdaysHeader>
+            </thead>
             <tbody>
               {calendarArr()}
             </tbody>
@@ -317,8 +455,17 @@ const Calender =()=>{
                   placeholder="일정을 입력하세요"
                 />
                 <BtnWrap>
-                  <CalenderBtn onClick={handleSaveEvent}>Add Event</CalenderBtn>
-                  <CalenderBtn onClick={handleCancelAddEvent}>Cancel</CalenderBtn>
+                  {editingEvent ? (
+                    <>
+                      <CalenderBtn onClick={handleUpdateEvent}>Update Event</CalenderBtn>
+                      <CalenderBtn onClick={() => setEditingEvent(null)}>Cancel</CalenderBtn>
+                    </>
+                  ) : (
+                    <>
+                      <CalenderBtn onClick={handleSaveEvent}>Add Event</CalenderBtn>
+                      <CalenderBtn onClick={handleCancelAddEvent}>Cancel</CalenderBtn>
+                    </>
+                  )}
                 </BtnWrap>
               </InputWrap>
             </InputPositioner>
@@ -326,18 +473,41 @@ const Calender =()=>{
 
         
       </CalenderWrapper>
-      {selectedDate && eventList.length > 0 && ( // 오늘 일정이 있는 경우에만 EventList를 노출
+      )}
+      
+      {((eventList.length > 0 && selectedDate) || (selectedHoliday && selectedHoliday.locdate)) && (
         <EventList>
           <EventListWrap>
-            <EventDate>{moment(selectedDate).format('YYYY년 MM월 DD일 dddd')}</EventDate>
-            {eventList.map((event, index) => (
-              <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
-                <EventTitle>{event.title}</EventTitle>
-              </EventItem>
-            ))}
+            {selectedHoliday && (
+              <>
+                <EventDate>{moment(selectedHoliday.locdate.toString()).format('YYYY년 MM월 DD일 dddd')}</EventDate>
+                <EventTitle>{selectedHoliday.dateName}</EventTitle>
+              </>
+            )}
+            
+            {!selectedHoliday && eventList.length > 0 && (
+              <>
+                <EventDate>{moment(selectedDate).format('YYYY년 MM월 DD일 dddd')}</EventDate>
+                {eventList.map((event, index) => (
+                  <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
+                    <EventTitle>
+                      {event.title}
+                      <EventEditButton onClick={() => handleEditEvent(event)}>
+                        <EventEditIcon>✎</EventEditIcon>Edit
+                      </EventEditButton>
+                      <EventEditButton onClick={() => handleDeleteEvent(event)}>
+                        <EventEditIcon>🗑</EventEditIcon>Delete
+                      </EventEditButton>
+                    </EventTitle>
+                  </EventItem>
+                ))}
+              </>
+            )}
+
           </EventListWrap>
         </EventList>
       )}
+
 
       <PlusButton onClick={() => { onToggle(); handleAddEvent(); }} open={showAddModal}>
         <MdAdd />
