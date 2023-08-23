@@ -1,11 +1,13 @@
-import React from 'react';
-import {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import moment from 'moment';
-import 'moment/locale/ko'; // 한국어 로케일을 불러옵니다
+import 'moment/locale/ko';
 import styled, {css} from 'styled-components';
-import { MdOutlineNavigateBefore, MdOutlineNavigateNext, MdAdd } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete } from 'react-icons/md';
 import axios from "axios";
-import HolidayDetail from './HolidayDetail'; 
+import LoadingIndicator from './LoadingIndicator';
+import CalendarHeader from './CalendarHeader';
+import CalendarEventForm from './CalendarEventForm';
+
 
 const PlusButton = styled.button`
   background: #8758ff;
@@ -55,26 +57,6 @@ const CalenderWrapper = styled.div`
   border-bottom: 1px solid #e9ecef;
 `;
 
-const CalenderControl = styled.div`
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 36px;
-  color: #343a40;
-  font-weight: 700;
-  display: flex;
-  justify-content: center;
-  align-items: end;
-`;
-
-const PrevBtn = styled.div`
-  margin-right: 20px;
-  cursor: pointer;
-`
-
-const NextBtn = styled.div`
-  margin-left: 20px;
-  cursor: pointer;
-`
 
 const Calendertable = styled.table`
   margin: 0 auto;
@@ -128,6 +110,8 @@ const EventListWrap = styled.div`
   align-items: center;
   padding: 20px 0;
   color: #495057;
+  max-height: 175px;
+  overflow-y: auto;
 `;
 
 const EventItem = styled.div`
@@ -151,66 +135,19 @@ const EventTitle = styled.li`
   }
 `;
 
-const EventEditButton = styled.button`
+const EventEditDelBtn = styled.button`
   background: none;
   border: none;
-  color: #495057;
+  color: #ced4da;
   cursor: pointer;
-`;
-
-const EventEditIcon = styled.span`
-  margin-right: 5px;
-`;
-
-const InputPositioner = styled.div`
-  width: 100%;
-  bottom: 0;
-  left: 0;
-  position: absolute;
-`;
-
-const InputWrap = styled.div`
-  background: #f8f9fa;
-  padding-left: 32px;
-  padding-top: 40px;
-  padding-right: 32px;
-  padding-bottom: 30px;
-
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-  border-top: 1px solid #e9ecef;
-`;
-
-const Input = styled.input`
-  padding: 12px;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-  width: 100%;
-  outline: none;
   font-size: 18px;
-  box-sizing: border-box;
-  margin-bottom: 15px;
-  cursor: pointer;
-`;
-
-const BtnWrap = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 27px;
-`;
-
-const CalenderBtn = styled.div`
-  padding: 10px 15px;
-  margin: 0 10px;
-  color: #495057;
-  background-color: #ced4da;
-  cursor: pointer;
-  border-radius: 3px;
-
+  padding: 0;
+  margin: 0 0 0 10px;
+  &:first-child {
+    margin: 0 0 0 30px;
+  }
   &:hover {
-    color: #c5aeff;
-    background: #8758ff;
+    color: #8758ff;
   }
 `;
 
@@ -226,9 +163,6 @@ const HolidayMark = styled.div`
   transform: translateX(-50%);
 `;
 
-const LoadingIndicator = () => {
-  return <div>Loading...</div>;
-};
 
 const Calender =()=>{
   const [getMoment, setMoment]=useState(moment());
@@ -273,7 +207,6 @@ const Calender =()=>{
 
               const isToday = days.isSame(moment(), 'day'); // 오늘 날짜인지 확인
               const isSunday = days.day() === 0;
-              const locdateString = days.format('YYYYMMDD');
               const isHoliday = holiday.some(holidayDate => holidayDate.locdate.toString() === days.format('YYYYMMDD'));
 
               const isCurrentMonth = days.month() === today.month(); // 이번 달의 날짜인지 확인
@@ -291,7 +224,6 @@ const Calender =()=>{
                 <TableTd key={index} style={tdStyle}>
                   <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
                   {event && (<EventMarkWrapper><EventMark /></EventMarkWrapper>)}
-                  {/* {isHoliday && <HolidayMark />} */}
                   {isHoliday && (
                     <HolidayMark
                       onClick={() => {
@@ -347,7 +279,7 @@ const Calender =()=>{
           console.error('Error fetching holiday data:', error);
         }
   
-        setLoading(false);
+        setLoading(false); // API 요청이 완료되었을 때 로딩 상태 변경
       };
   
       fetchHolidayData();
@@ -381,7 +313,7 @@ const Calender =()=>{
         (holiday) => holiday.locdate === parseInt(moment(date).format('YYYYMMDD'))
       );
 
-      console.log('Clicked Holiday:', clickedHoliday); // 추가
+      console.log('Clicked Holiday:', clickedHoliday);
       setSelectedHoliday(clickedHoliday);
       setNewEventDate(date); // 클릭한 날짜로 newEventDate 업데이트
     };
@@ -409,109 +341,90 @@ const Calender =()=>{
       setEvents(updatedEvents);
     };
 
+    const handleNextMonth = () => {
+      setSelectedDate(null);
+      setSelectedHoliday(null);
+    };
+
   return (
     <CalenderContainer>
       {/* 로딩 중이면 로딩 상태를 표시, 아니면 캘린더 컴포넌트를 표시 */}
       {loading ? (
-        <LoadingIndicator />
+        <LoadingIndicator text="Loading..." />
       ) : (
-      <CalenderWrapper>
+      <>
+        <CalenderWrapper>
+            <CalendarHeader
+              today={today}
+              handlePrevMon={() => { setMoment(getMoment.clone().subtract(1, 'month')); handleNextMonth(); }}
+              handleNextMon={() => { setMoment(getMoment.clone().add(1, 'month')); handleNextMonth(); }}
+            />
+            <Calendertable>
+              <thead>
+                <WeekdaysHeader>
+                  {weekdays.map((weekday, index) => (
+                    <WeekdayCell key={index}>{weekday}</WeekdayCell>
+                  ))}
+                </WeekdaysHeader>
+              </thead>
+              <tbody>
+                {calendarArr()}
+              </tbody>
+            </Calendertable>
+            {showAddModal && (
+              <CalendarEventForm
+                showAddModal={showAddModal}
+                newEventDate={newEventDate}
+                newEventTitle={newEventTitle}
+                setNewEventDate={setNewEventDate}
+                setNewEventTitle={setNewEventTitle}
+                editingEvent={editingEvent}
+                handleUpdateEvent={handleUpdateEvent}
+                handleSaveEvent={handleSaveEvent}
+                handleCancelAddEvent={handleCancelAddEvent}
+              />
+            )}
 
-          <CalenderControl>
-            <PrevBtn onClick={()=>{ setMoment(getMoment.clone().subtract(1, 'month')) }} >
-              <MdOutlineNavigateBefore />
-            </PrevBtn>
-            <div>{today.format('YYYY 년 MM 월')}</div>
-            <NextBtn onClick={()=>{ setMoment(getMoment.clone().add(1, 'month')) }} >
-            <MdOutlineNavigateNext /> 
-            </NextBtn>
-          </CalenderControl>
-          <Calendertable>
-            <thead>
-              <WeekdaysHeader>
-                {weekdays.map((weekday, index) => (
-                  <WeekdayCell key={index}>{weekday}</WeekdayCell>
-                ))}
-              </WeekdaysHeader>
-            </thead>
-            <tbody>
-              {calendarArr()}
-            </tbody>
-          </Calendertable>
-          {showAddModal && (
-            <InputPositioner>
-              <InputWrap>
-                <Input 
-                  autoFocus
-                  type="date" 
-                  value={newEventDate} 
-                  onChange={(e) => setNewEventDate(e.target.value)} 
-                />
-                <Input 
-                  autoFocus
-                  type="text" 
-                  value={newEventTitle} 
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                  placeholder="일정을 입력하세요"
-                />
-                <BtnWrap>
-                  {editingEvent ? (
-                    <>
-                      <CalenderBtn onClick={handleUpdateEvent}>Update Event</CalenderBtn>
-                      <CalenderBtn onClick={() => setEditingEvent(null)}>Cancel</CalenderBtn>
-                    </>
-                  ) : (
-                    <>
-                      <CalenderBtn onClick={handleSaveEvent}>Add Event</CalenderBtn>
-                      <CalenderBtn onClick={handleCancelAddEvent}>Cancel</CalenderBtn>
-                    </>
-                  )}
-                </BtnWrap>
-              </InputWrap>
-            </InputPositioner>
-          )}
-
+        </CalenderWrapper>
         
-      </CalenderWrapper>
+        {((eventList.length > 0 && selectedDate) || (selectedHoliday && selectedHoliday.locdate)) && (
+          <EventList>
+            <EventListWrap>
+              {selectedHoliday && (
+                <>
+                  <EventDate>{moment(selectedHoliday.locdate.toString()).format('YYYY년 MM월 DD일 dddd')}</EventDate>
+                  <EventTitle>{selectedHoliday.dateName}</EventTitle>
+                </>
+              )}
+              
+              {!selectedHoliday && eventList.length > 0 && (
+                <>
+                  <EventDate>{moment(selectedDate).format('YYYY년 MM월 DD일 dddd')}</EventDate>
+                  {eventList.map((event, index) => (
+                    <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
+                      <EventTitle>
+                        {event.title}
+                        <EventEditDelBtn onClick={() => handleEditEvent(event)}>
+                          <MdEdit />
+                        </EventEditDelBtn>
+                        <EventEditDelBtn onClick={() => handleDeleteEvent(event)}>
+                          <MdDelete />
+                        </EventEditDelBtn>
+                      </EventTitle>
+                    </EventItem>
+                  ))}
+                </>
+              )}
+
+            </EventListWrap>
+          </EventList>
+        )}
+
+        <PlusButton onClick={() => { onToggle(); handleAddEvent(); }} open={showAddModal}>
+          <MdAdd />
+        </PlusButton>
+      </>
       )}
-      
-      {((eventList.length > 0 && selectedDate) || (selectedHoliday && selectedHoliday.locdate)) && (
-        <EventList>
-          <EventListWrap>
-            {selectedHoliday && (
-              <>
-                <EventDate>{moment(selectedHoliday.locdate.toString()).format('YYYY년 MM월 DD일 dddd')}</EventDate>
-                <EventTitle>{selectedHoliday.dateName}</EventTitle>
-              </>
-            )}
-            
-            {!selectedHoliday && eventList.length > 0 && (
-              <>
-                <EventDate>{moment(selectedDate).format('YYYY년 MM월 DD일 dddd')}</EventDate>
-                {eventList.map((event, index) => (
-                  <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
-                    <EventTitle>
-                      {event.title}
-                      <EventEditButton onClick={() => handleEditEvent(event)}>
-                        <EventEditIcon>✎</EventEditIcon>Edit
-                      </EventEditButton>
-                      <EventEditButton onClick={() => handleDeleteEvent(event)}>
-                        <EventEditIcon>🗑</EventEditIcon>Delete
-                      </EventEditButton>
-                    </EventTitle>
-                  </EventItem>
-                ))}
-              </>
-            )}
-
-          </EventListWrap>
-        </EventList>
-      )}
-
-
-      <PlusButton onClick={() => { onToggle(); handleAddEvent(); }} open={showAddModal}>
-        <MdAdd />
-      </PlusButton>
     </CalenderContainer>
   );
 }
