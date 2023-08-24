@@ -26,7 +26,6 @@ const PlusButton = styled.button`
   transform: translate(-50%, 50%);
   color: white;
   border-radius: 6%;
-  /* border-radius: 50%; */
   border: none;
   outline: none;
   display: flex;
@@ -111,6 +110,7 @@ function TodoCreate() {
               placeholder="할 일을 입력 후, Enter 를 누르세요"
               onChange={onChange}
               value={value}
+              done={false}
             />
           </InsertForm>
         </InsertFormPositioner>

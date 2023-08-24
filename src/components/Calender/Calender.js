@@ -47,7 +47,6 @@ const PlusButton = styled.button`
 `;
 
 const CalenderContainer = styled.div`
-
 `;
 
 const CalenderWrapper = styled.div`
@@ -56,7 +55,6 @@ const CalenderWrapper = styled.div`
   padding-bottom: 24px;
   border-bottom: 1px solid #e9ecef;
 `;
-
 
 const Calendertable = styled.table`
   margin: 0 auto;
@@ -166,7 +164,7 @@ const HolidayMark = styled.div`
 
 const Calender =()=>{
   const [getMoment, setMoment]=useState(moment());
-  const [holiday, setHoliday] = useState([]); // Initialize with an empty array
+  const [holiday, setHoliday] = useState([]);
   const [selectedHoliday, setSelectedHoliday] = useState(null);
   const [loading, setLoading] = useState(false); // 로딩 상태 추가
 
@@ -212,7 +210,7 @@ const Calender =()=>{
               const isCurrentMonth = days.month() === today.month(); // 이번 달의 날짜인지 확인
               const tdStyle = {
                 color: isSunday ? 'red' : isToday ? '#c5aeff' : isCurrentMonth ? (isHoliday ? 'red' : '#343a40') : '#acacac',
-                fontWeight: isToday ? '600' : 'normal', // 오늘 날짜는 더 강조된 글꼴 두께,
+                fontWeight: isToday ? '600' : 'normal',
                 backgroundColor: isToday ? '#8758ff' : '',
                 borderRadius: isToday ? '50%' : '',
               };
@@ -392,14 +390,20 @@ const Calender =()=>{
             <EventListWrap>
               {selectedHoliday && (
                 <>
-                  <EventDate>{moment(selectedHoliday.locdate.toString()).format('YYYY년 MM월 DD일 dddd')}</EventDate>
-                  <EventTitle>{selectedHoliday.dateName}</EventTitle>
+                  <EventDate>
+                    {moment(selectedHoliday.locdate.toString()).format('YYYY년 MM월 DD일 (ddd)')}
+                  </EventDate>
+                  <EventTitle>
+                    {selectedHoliday.dateName}
+                  </EventTitle>
                 </>
               )}
               
               {!selectedHoliday && eventList.length > 0 && (
                 <>
-                  <EventDate>{moment(selectedDate).format('YYYY년 MM월 DD일 dddd')}</EventDate>
+                  <EventDate>
+                    {moment(selectedDate).format('YYYY년 MM월 DD일 (ddd)')}
+                  </EventDate>
                   {eventList.map((event, index) => (
                     <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
                       <EventTitle>

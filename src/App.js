@@ -82,23 +82,12 @@ function App() {
         
         {selectedTab === 'tab2' && (
           <>
-            {/* 다른 탭 컨텐츠 */}
             <Calender />
           </>
         )}
       </TodoTemplate>
     </TodoProvider>
   );
-  // return (
-  //   <TodoProvider>
-  //     <GlobalStyle />
-  //     <TodoTemplate>
-  //       <TodoHead />
-  //       <TodoList />
-  //       <TodoCreate />
-  //     </TodoTemplate>
-  //   </TodoProvider>
-  // );
 }
 
 export default App;
