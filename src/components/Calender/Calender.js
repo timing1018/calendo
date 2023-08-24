@@ -167,11 +167,13 @@ const HolidayMark = styled.div`
 `;
 
 const dummyEvents = [
+  { date: '2023-07-12', title: '전체 미팅' },
   { date: '2023-08-10', title: '고객사 미팅' },
   { date: '2023-08-24', title: '기념일' },
-  { date: '2023-09-02', title: '스터디 모임' },
   { date: '2023-09-06', title: '가족 모임' },
-  { date: '2023-09-18', title: '레스토랑 11시30분 예약' },
+  { date: '2023-09-18', title: '레스토랑 예약' },
+  { date: '2023-10-20', title: '피부관리실 예약' },
+  { date: '2023-12-30', title: '연말 모임' },
 ];
 
 
@@ -219,7 +221,8 @@ const Calender =()=>{
 
               const isToday = days.isSame(moment(), 'day'); // 오늘 날짜인지 확인
               const isSunday = days.day() === 0;
-              const isHoliday = holiday.some(holidayDate => holidayDate.locdate.toString() === days.format('YYYYMMDD'));
+              // const isHoliday = holiday.some(holidayDate => holidayDate.locdate.toString() === days.format('YYYYMMDD'));
+              const isHoliday = holiday.some(holidayDate => holidayDate && holidayDate.locdate && holidayDate.locdate.toString() === days.format('YYYYMMDD'));
 
               const isCurrentMonth = days.month() === today.month(); // 이번 달의 날짜인지 확인
               const tdStyle = {
@@ -236,17 +239,21 @@ const Calender =()=>{
                 <TableTd key={index} style={tdStyle}>
                   <span onClick={() => handleCellClick(days.format('YYYY-MM-DD'))}>{days.format('D')}</span>
                   {event && (<EventMarkWrapper><EventMark /></EventMarkWrapper>)}
-                  {isHoliday && (
+                  {isHoliday && holiday && (
                     <HolidayMark
                       onClick={() => {
-                        console.log('Checking isHoliday:', days.format('YYYYMMDD'), isHoliday);
+                        const clickedDateString = days.format('YYYYMMDD');
+                        console.log('Checking isHoliday:', clickedDateString);
                         console.log('Holiday Array:', holiday);
-                  
+
                         const clickedHoliday = holiday.find(
-                          (holiday) => holiday.locdate === parseInt(days.format('YYYYMMDD'))
+                          (holiday) => holiday.locdate === parseInt(clickedDateString)
                         );
                         console.log('Clicked Holiday:', clickedHoliday);
-                        setSelectedHoliday(clickedHoliday);
+
+                        if (clickedHoliday) {
+                          setSelectedHoliday(clickedHoliday);
+                        }
                       }}
                     />
                   )}
@@ -312,10 +319,6 @@ const Calender =()=>{
       setShowAddModal(false);
     };
 
-    const handleCancelAddEvent = () => {
-      setShowAddModal(false);
-    };
-
     const eventList = events
       .filter(event => event.date === selectedDate) // 선택한 날짜에 해당하는 일정만 필터링  
 
@@ -324,18 +327,24 @@ const Calender =()=>{
       const clickedHoliday = holiday.find(
         (holiday) => holiday.locdate === parseInt(moment(date).format('YYYYMMDD'))
       );
-
-      console.log('Clicked Holiday:', clickedHoliday);
-      setSelectedHoliday(clickedHoliday);
+      setSelectedHoliday(clickedHoliday || null); // 공휴일이 없는 경우에는 null로 설정
       setNewEventDate(date); // 클릭한 날짜로 newEventDate 업데이트
     };
 
-      
     const handleEditEvent = (event) => {
       setEditingEvent(event); // 수정 중인 일정 정보 설정
       setShowAddModal(true); // 모달 표시
       setNewEventDate(event.date); // 수정 중인 일정의 날짜 설정
       setNewEventTitle(event.title); // 수정 중인 일정의 제목 설정
+
+      const clickedHoliday = holiday.find(
+        (holiday) => holiday.locdate === parseInt(moment(event.date).format('YYYYMMDD'))
+      );
+      setSelectedHoliday(clickedHoliday || null); // 공휴일 정보 업데이트
+    };
+
+    const handleCancelAddEvent = () => {
+      setShowAddModal(false); // 모달 닫기
     };
   
     const handleUpdateEvent = () => {
@@ -386,11 +395,13 @@ const Calender =()=>{
             {showAddModal && (
               <CalendarEventForm
                 showAddModal={showAddModal}
+                setShowAddModal={setShowAddModal}
                 newEventDate={newEventDate}
                 newEventTitle={newEventTitle}
                 setNewEventDate={setNewEventDate}
                 setNewEventTitle={setNewEventTitle}
                 editingEvent={editingEvent}
+                setEditingEvent={setEditingEvent}
                 handleUpdateEvent={handleUpdateEvent}
                 handleSaveEvent={handleSaveEvent}
                 handleCancelAddEvent={handleCancelAddEvent}
@@ -402,6 +413,7 @@ const Calender =()=>{
         {((eventList.length > 0 && selectedDate) || (selectedHoliday && selectedHoliday.locdate)) && (
           <EventList>
             <EventListWrap>
+
               {selectedHoliday && (
                 <>
                   <EventDate>
@@ -410,6 +422,21 @@ const Calender =()=>{
                   <EventTitle>
                     {selectedHoliday.dateName}
                   </EventTitle>
+                  {eventList.map((event, index) => (
+                    editingEvent !== event && (
+                      <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
+                        <EventTitle>
+                          {event.title}
+                          <EventEditDelBtn onClick={() => handleEditEvent(event)}>
+                            <MdEdit />
+                          </EventEditDelBtn>
+                          <EventEditDelBtn onClick={() => handleDeleteEvent(event)}>
+                            <MdDelete />
+                          </EventEditDelBtn>
+                        </EventTitle>
+                      </EventItem>
+                    )
+                  ))}
                 </>
               )}
               
@@ -419,17 +446,19 @@ const Calender =()=>{
                     {moment(selectedDate).format('YYYY년 MM월 DD일 (ddd)')}
                   </EventDate>
                   {eventList.map((event, index) => (
-                    <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
-                      <EventTitle>
-                        {event.title}
-                        <EventEditDelBtn onClick={() => handleEditEvent(event)}>
-                          <MdEdit />
-                        </EventEditDelBtn>
-                        <EventEditDelBtn onClick={() => handleDeleteEvent(event)}>
-                          <MdDelete />
-                        </EventEditDelBtn>
-                      </EventTitle>
-                    </EventItem>
+                    editingEvent !== event && (
+                      <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
+                        <EventTitle>
+                          {event.title}
+                          <EventEditDelBtn onClick={() => handleEditEvent(event)}>
+                            <MdEdit />
+                          </EventEditDelBtn>
+                          <EventEditDelBtn onClick={() => handleDeleteEvent(event)}>
+                            <MdDelete />
+                          </EventEditDelBtn>
+                        </EventTitle>
+                      </EventItem>
+                    )
                   ))}
                 </>
               )}

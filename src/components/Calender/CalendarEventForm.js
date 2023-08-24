@@ -56,6 +56,7 @@ const CalenderBtn = styled.div`
 
 const CalendarEventForm = ({
   showAddModal,
+  setShowAddModal,
   newEventDate,
   newEventTitle,
   setNewEventDate,
@@ -64,7 +65,7 @@ const CalendarEventForm = ({
   setEditingEvent,
   handleUpdateEvent,
   handleSaveEvent,
-  handleCancelAddEvent
+  handleCancelAddEvent,
 }) => {
   return (
     showAddModal && (
@@ -87,7 +88,7 @@ const CalendarEventForm = ({
             {editingEvent ? (
               <>
                 <CalenderBtn onClick={handleUpdateEvent}>Update Event</CalenderBtn>
-                <CalenderBtn onClick={() => setEditingEvent(null)}>Cancel</CalenderBtn>
+                <CalenderBtn onClick={() => { setEditingEvent(null); setShowAddModal(false); }}>Cancel</CalenderBtn>
               </>
             ) : (
               <>
