@@ -22,7 +22,7 @@ const initialTodos = [
     done: false
   },
   {
-    id: 4,
+    id: 5,
     text: '스터디 신청하기',
     done: false
   }

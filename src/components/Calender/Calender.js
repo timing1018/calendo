@@ -112,7 +112,28 @@ const EventListWrap = styled.div`
   overflow-y: auto;
 `;
 
+const EventEditDelBtn = styled.button`
+  background: none;
+  border: none;
+  color: #ced4da;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  margin: 0 0 0 10px;
+  display: none;
+  &:first-child {
+    margin: 0 0 0 30px;
+  }
+  &:hover {
+    color: #8758ff;
+  }
+`;
+
 const EventItem = styled.div`
+  position: relative;
+  &:hover ${EventEditDelBtn} {
+    display: inline;
+  }
 `;
 
 const EventDate = styled.div`
@@ -133,22 +154,6 @@ const EventTitle = styled.li`
   }
 `;
 
-const EventEditDelBtn = styled.button`
-  background: none;
-  border: none;
-  color: #ced4da;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 0;
-  margin: 0 0 0 10px;
-  &:first-child {
-    margin: 0 0 0 30px;
-  }
-  &:hover {
-    color: #8758ff;
-  }
-`;
-
 const HolidayMark = styled.div`
   position: absolute;
   width: 4px;
@@ -161,6 +166,14 @@ const HolidayMark = styled.div`
   transform: translateX(-50%);
 `;
 
+const dummyEvents = [
+  { date: '2023-08-10', title: '고객사 미팅' },
+  { date: '2023-08-24', title: '기념일' },
+  { date: '2023-09-02', title: '스터디 모임' },
+  { date: '2023-09-06', title: '가족 모임' },
+  { date: '2023-09-18', title: '레스토랑 11시30분 예약' },
+];
+
 
 const Calender =()=>{
   const [getMoment, setMoment]=useState(moment());
@@ -171,7 +184,8 @@ const Calender =()=>{
   const weekdays = ['일', '월', '화', '수', '목', '금', '토']; // 요일 배열
 
   // 일정 데이터 상태 초기화
-  const [events, setEvents] = useState([]);
+  // const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(dummyEvents);
 
   const [showAddModal, setShowAddModal] = useState(false); // 일정 추가 모달 표시 여부
   const [newEventDate, setNewEventDate] = useState(''); // 새로운 일정의 날짜
