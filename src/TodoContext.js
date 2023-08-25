@@ -18,11 +18,6 @@ const initialTodos = [
   },
   {
     id: 4,
-    text: '옷 수선 맡기기',
-    done: false
-  },
-  {
-    id: 5,
     text: '스터디 신청하기',
     done: false
   }

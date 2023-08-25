@@ -16,6 +16,11 @@ const TodoTemplateBlock = styled.div`
   margin-bottom: 32px;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 514px) {
+    width: 100%;
+    max-width: none;
+  }
 `;
 
 function TodoTemplate({ children }) {

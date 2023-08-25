@@ -16,16 +16,14 @@ const GlobalStyle = createGlobalStyle`
 
 const TabWrapper = styled.div`
   width: 100%;
-  max-width: 515px;
-  flex: flex;
-  align-items: center;
+  max-width: none;
+  display: flex;
+  justify-content: flex-start;
 `
 
 const Tab = styled.div`
-  display: inline-block;
   text-align: center;
   width: 50%;
-  max-width: 257px;
   padding: 20px 0;
   background-color: #f8f9fa;
   font-size: 21px;

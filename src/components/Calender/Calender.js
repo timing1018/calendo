@@ -32,7 +32,6 @@ const PlusButton = styled.button`
   transform: translate(-50%, 50%);
   color: white;
   border-radius: 6%;
-  /* border-radius: 50%; */
   border: none;
   outline: none;
   display: flex;
@@ -44,6 +43,13 @@ const PlusButton = styled.button`
     css`
       display: none;
     `}
+
+    @media (max-width: 514px) {
+    width: 48px;
+    height: 48px;
+    font-size: 40px;
+    bottom: 35px;
+  }
 `;
 
 const CalenderContainer = styled.div`
@@ -275,7 +281,7 @@ const Calender =()=>{
         try {
           const serviceKey = decodeURIComponent(process.env.REACT_APP_SERVICE_KEY);
           const response = await axios.get(
-            `http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo`,
+            `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo`,
             {
               params: {
                 ServiceKey: serviceKey,

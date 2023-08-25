@@ -45,6 +45,13 @@ const PlusButton = styled.button`
       }
       transform: translate(-50%, 50%) rotate(45deg);
     `}
+
+    @media (max-width: 514px) {
+    width: 48px;
+    height: 48px;
+    font-size: 40px;
+    bottom: 35px;
+  }
 `;
 
 const InsertFormPositioner = styled.div`
