@@ -20,6 +20,7 @@ const TodoTemplateBlock = styled.div`
   @media (max-width: 514px) {
     width: 100%;
     max-width: none;
+    margin-top: 32px;
   }
 `;
 
