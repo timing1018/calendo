@@ -45,10 +45,18 @@ const PlusButton = styled.button`
     `}
 
     @media (max-width: 514px) {
-    width: 48px;
-    height: 48px;
-    font-size: 40px;
-    bottom: 35px;
+    /* width: 55px;
+    height: 55px; */
+    font-size: 0px;
+    bottom: 0;
+    background: #8758ff;
+    border-radius: 50%;
+
+    &:before {
+      content: '+';
+      font-size: 48px;
+      color: white;
+    }
   }
 `;
 
@@ -232,7 +240,8 @@ const Calender =()=>{
 
               const isCurrentMonth = days.month() === today.month(); // 이번 달의 날짜인지 확인
               const tdStyle = {
-                color: isSunday ? 'red' : isToday ? '#c5aeff' : isCurrentMonth ? (isHoliday ? 'red' : '#343a40') : '#acacac',
+                // color: isSunday ? 'red' : isToday ? '#c5aeff' : isCurrentMonth ? (isHoliday ? 'red' : '#343a40') : '#acacac',
+                color: isSunday ? (isToday ? '#c5aeff' : 'red') : isToday ? '#c5aeff' : isCurrentMonth ? (isHoliday ? 'red' : '#343a40') : '#acacac',
                 fontWeight: isToday ? '600' : 'normal',
                 backgroundColor: isToday ? '#8758ff' : '',
                 borderRadius: isToday ? '50%' : '',
@@ -416,10 +425,12 @@ const Calender =()=>{
 
         </CalenderWrapper>
         
-        {((eventList.length > 0 && selectedDate) || (selectedHoliday && selectedHoliday.locdate)) && (
+        {/* 이벤트 목록 리스트를 showAddModal 값에 따라 렌더링 */}
+        {!showAddModal && (
           <EventList>
             <EventListWrap>
 
+              {/* selectedHoliday와 eventList에 따라 다르게 렌더링 */}
               {selectedHoliday && (
                 <>
                   <EventDate>
@@ -428,6 +439,7 @@ const Calender =()=>{
                   <EventTitle>
                     {selectedHoliday.dateName}
                   </EventTitle>
+
                   {eventList.map((event, index) => (
                     editingEvent !== event && (
                       <EventItem key={index} data-istoday={moment().format('YYYY-MM-DD') === event.date}>
@@ -445,7 +457,7 @@ const Calender =()=>{
                   ))}
                 </>
               )}
-              
+
               {!selectedHoliday && eventList.length > 0 && (
                 <>
                   <EventDate>

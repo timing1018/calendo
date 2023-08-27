@@ -47,10 +47,18 @@ const PlusButton = styled.button`
     `}
 
     @media (max-width: 514px) {
-    width: 48px;
-    height: 48px;
-    font-size: 40px;
-    bottom: 35px;
+    /* width: 55px;
+    height: 55px; */
+    font-size: 0px;
+    bottom: 0;
+    background: #8758ff;
+    border-radius: 50%;
+
+    &:before {
+      content: '+';
+      font-size: 48px;
+      color: white;
+    }
   }
 `;
 
